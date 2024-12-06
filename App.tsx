@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
   DimensionValue,
@@ -9,23 +9,18 @@ import {
   Text,
   useColorScheme,
   View,
-  Animated as Animat ,
-  TouchableOpacity,
-  Button
-} from 'react-native';
+  TouchableOpacity} from 'react-native';
 
 import {
   Colors,
 } from 'react-native/Libraries/NewAppScreen';
-import Animated, { Extrapolation, interpolate, SharedValue, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { Extrapolation, interpolate, runOnJS, SharedValue, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('screen');
-const _itemwidth = width* 0.7
-const _itemheight = _itemwidth* 1.5
-const _spacing = 20 
+const _itemwidth = width* 0.6
+const _itemheight = _itemwidth * 1.5
+const _spacing = 8 
 const _itemfullsize = _itemwidth + _spacing
-const IMG_WIDTH = width * 0.75;
-const IMG_HEIGHT = IMG_WIDTH * 1.45;
 
 interface IData {
   title : string;
@@ -35,8 +30,10 @@ interface IData {
 
 interface ICard {
   index : number
+  indexActive : number | null
   data : IData
-  active : boolean
+  expanded: boolean | undefined
+  currentIndex : number
   scrollx : SharedValue<number>
   handlePressItem: (index : number) => void
 }
@@ -49,23 +46,33 @@ export interface CardRenderProps {
   marginHorizontal?: DimensionValue;
 }
 
-const Card = ( {data, active, index , handlePressItem,scrollx} : ICard) => {
+const Card = ( {data, expanded, currentIndex, indexActive, index , handlePressItem,scrollx} : ICard) => {
   const widthAnimated = useSharedValue(_itemwidth);
   const heigthAnimated = useSharedValue(_itemheight);
+  const translateX = useSharedValue<number>(0);
   const [activetemp, setActivetemp] = useState(false)    
 
   const stylez = useAnimatedStyle(() => {
     return {
       transform: [{scale :interpolate(scrollx.value,[
-        index-10, index , index +10
-      ],[-0.8,1,0,8],Extrapolation.CLAMP)},{translateX :interpolate(activetemp? 1 : 0,[
-        index-1, index , index +1
-      ],[-5,1,5],Extrapolation.CLAMP)}]
+        index-24, index , index +24
+      ],[-0.8,1,0,8],Extrapolation.CLAMP)},{translateX :  withSpring(translateX.value * 0.5)}]
     }
   })
 
+  useEffect(() => {    
+    if (expanded != undefined) {
+      if (index > currentIndex) {
+          indexActive != null ? translateX.value += 120 : translateX.value -= 120
+      }
+      if (index < currentIndex) {
+        indexActive != null ? translateX.value -= 120 : translateX.value += 120
+      }
+    }
+  }, [expanded])
+  
   return (
-    <TouchableOpacity onPress={() => {
+    <TouchableOpacity disabled={currentIndex != index} onPress={() => {
       handlePressItem(index)
       widthAnimated.value = withSpring(activetemp == false ? width : _itemwidth);
       heigthAnimated.value = withSpring(activetemp == false ? height : _itemheight);
@@ -75,7 +82,7 @@ const Card = ( {data, active, index , handlePressItem,scrollx} : ICard) => {
             width: widthAnimated,
             height: heigthAnimated,
             backgroundColor: 'white',
-            borderRadius:8,
+            borderRadius: 15,
           }, styles.shadow]}>
         <Text style={{textAlign:'center'}}>{data.title}</Text>
         <Image width={60} height={60} source={{uri : data.image}}/>
@@ -89,16 +96,27 @@ function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   const scrollx = useSharedValue(0)
+  const currentIndexShared = useSharedValue(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [expanded, setexpanded] = useState<boolean | undefined>(undefined)
+
   const onScroll = useAnimatedScrollHandler((event) => {
     scrollx.value = event.contentOffset.x / _itemfullsize
+// console.log('event',event.contentOffset.x);
+
+    const index = Math.round(event.contentOffset.x / _itemfullsize);    
+      if (index !== currentIndexShared.value) {
+        currentIndexShared.value = index;
+        runOnJS(setCurrentIndex)(index);
+      }
   })
 
   const [indexActive, setIndexActive] = useState<number | null>(null)
 
 
     const handlePressItem = (index: number) => {
+      setexpanded(expanded == true ? false : true)
     if (indexActive === index) {
-     
       setIndexActive(null); 
     } else {
      
@@ -135,15 +153,12 @@ function App(): React.JSX.Element {
           decelerationRate={'fast'}
           keyExtractor={(item,index) => item.title + index}
           onScroll={onScroll}
-          scrollEnabled={indexActive == null}
-
+          scrollEnabled={expanded != true}
           renderItem={({item, index}) => {
             return (
-            <View style={{alignItems: "center", marginHorizontal: indexActive == index ? 10 : 0}}> 
-                <View style={{width: _itemwidth, borderRadius: 15, height: _itemheight, alignItems: "center", }}>
-                  <Card scrollx={scrollx}  handlePressItem={handlePressItem}  index={index} active={indexActive == index} data={item}/>
-                </View>
-            </View>
+              <View style={{width: _itemwidth, borderRadius: 15, height: _itemheight, alignItems: "center", }}>
+                <Card expanded={expanded} currentIndex={currentIndex} scrollx={scrollx}  indexActive={indexActive}  handlePressItem={handlePressItem}  index={index} data={item}/>
+              </View>
             )
           }}
         />
