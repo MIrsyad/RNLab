@@ -1,23 +1,40 @@
 import { useEffect, useState } from "react"
-import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native"
 import Animated, { Extrapolation, interpolate, SharedValue, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated"
 import { _itemheight, _itemwidth, height, width } from "../assets/constant"
+import Icon from '@react-native-vector-icons/ant-design';
+import CButton from "./button";
+import Actor from "./Actor";
 
 export interface ICard {
 index : number
 indexActive : number | null
-data : IData
+data : IMovie
 expanded: boolean | undefined
 currentIndex : number
 scrollx : SharedValue<number>
 handlePressItem: (index : number) => void
 }
-
-export interface IData {
-title : string;
-content : string;
-image?: string;
-}
+export interface ICast {
+    actor: string;
+    character: string;
+  }
+  
+export interface IMovie {
+    id: number;
+    title: string;
+    year: number;
+    genre: string;
+    director: string;
+    cast: ICast[]; 
+    rating: number;
+    duration: string; 
+    language: string;
+    country: string;
+    boxOffice: string; 
+    poster: string; 
+    description: string;
+  }
 
 const Card = ( {data, expanded, currentIndex, indexActive, index , handlePressItem,scrollx} : ICard) => {
 const widthAnimated = useSharedValue(_itemwidth );
@@ -77,27 +94,43 @@ useEffect(() => {
 
 return (
     //touchablecomponent card, disabled when not focused and any card is expanded
-    <TouchableOpacity disabled={currentIndex != index || expanded} onPress={handlePress}>
+    <TouchableWithoutFeedback disabled={currentIndex != index || expanded} onPress={handlePress}>
         <Animated.View style={[stylez,{
             backgroundColor: 'white',
             borderRadius: 15,
             }, styles.shadow]}>
-            <View style={{padding : 4, flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
+            <View style={{padding : 8, flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
                 {/* render close button to close the expanded card */}
-                {expanded && 
+                {activetemp && 
                 <TouchableOpacity  style={{position:'absolute', top:4, left:4,zIndex:1000}} onPress={handlePress}>
-                <Text>Close</Text>
+                <Text style={{fontSize: 14}}>Close</Text>
                 </TouchableOpacity>
                 }
-                <Text style={{textAlign:'center',flex:1}}>{data.title}</Text>
+                <Text style={{textAlign:'center',flex:1, fontSize:20, fontWeight:'800'}}>{data.title}</Text>
             </View>
         {/* for scrolling the entire card details, disabled when not expanded */}
         <ScrollView scrollEnabled={activetemp} contentContainerStyle={{ flexGrow: 1 }}>
-            <Animated.Image style={styleImage} source={{uri : data.image}}/>
-            <Text style={{textAlign:'justify',padding:8}} numberOfLines={!activetemp? 7 : undefined}>{data.content}</Text>
+            <Animated.Image style={styleImage} source={{uri : data.poster}}/>
+            {activetemp && 
+            <>
+                <View>
+                    <CButton text="Watch Now" Left={<Icon name="plus" size={30} color="white" />} />
+                </View>
+                <View style={{paddingHorizontal:8}}>
+                    <View style={{width:'100%', borderColor:'gray',borderWidth:1}}/>
+                    <Text style={{fontSize:16,fontWeight:600}}>Actor</Text>
+                    <ScrollView >
+                        <View style={{flexDirection:'row',columnGap:8}}>
+                         {data.cast.map(element => <Actor key={element.actor} actor={element.actor} character={element.character}/>)}
+                        </View>
+                    </ScrollView>
+                </View>
+            </>
+            }
+            <Text style={{textAlign:'justify',padding:8}} numberOfLines={!activetemp? 7 : undefined}>{data.description}</Text>
         </ScrollView >
         </Animated.View>
-    </TouchableOpacity>
+    </TouchableWithoutFeedback>
     )
 }
 

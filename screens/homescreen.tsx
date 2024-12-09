@@ -11,24 +11,9 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 import Animated, { runOnJS, SharedValue, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { _itemfullsize, _itemheight, _itemwidth, _spacing, data, width } from '../assets/constant';
+import { _itemfullsize, _itemheight, _itemwidth, _spacing, movieData, width } from '../assets/constant';
 import Card from '../components/movieCard';
 
-interface IData {
-  title : string;
-  content : string;
-  image?: string;
-}
-
-interface ICard {
-  index : number
-  indexActive : number | null
-  data : IData
-  expanded: boolean | undefined
-  currentIndex : number
-  scrollx : SharedValue<number>
-  handlePressItem: (index : number) => void
-}
 
 function HomeScreen(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -78,7 +63,7 @@ function HomeScreen(): React.JSX.Element {
             backgroundColor={backgroundStyle.backgroundColor}
         />
             <Animated.FlatList
-            data={data}
+            data={movieData}
             horizontal
             showsHorizontalScrollIndicator={false}
             pagingEnabled
