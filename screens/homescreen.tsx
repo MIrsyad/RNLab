@@ -32,15 +32,17 @@ interface ICard {
 
 function HomeScreen(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
-
   const scrollx = useSharedValue(0)
   const currentIndexShared = useSharedValue(0);
+//   current index of focused card
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expanded, setexpanded] = useState<boolean | undefined>(undefined)
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
+        // sett scrollx value divided by card item fullsize : width + padding
       scrollx.value = event.contentOffset.x / _itemfullsize;
+      //getting current index of the card by dividing the contentoffset divided by its card item full size
       const index = Math.round(event.contentOffset.x / _itemfullsize);    
       if (index !== currentIndexShared.value) {
         currentIndexShared.value = index;
@@ -49,6 +51,7 @@ function HomeScreen(): React.JSX.Element {
     },
   });
 
+//   to determine which index is expanded/active card
   const [indexActive, setIndexActive] = useState<number | null>(null)
 
 

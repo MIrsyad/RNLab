@@ -25,18 +25,24 @@ const heigthAnimated = useSharedValue(_itemheight );
 const IwidthAnimated = useSharedValue(_itemwidth );
 const IheigthAnimated = useSharedValue(100);
 const translateX = useSharedValue<number>(0);
+
+// for determine is there any expanded card
 const [activetemp, setActivetemp] = useState(false)    
 
+//card animation
 const stylez = useAnimatedStyle(() => {
     return {
+    // scaling the card size based on index position, the further the more smaller
     transform: [{scale :interpolate(scrollx.value,[
         index-24, index , index +24
-    ],[-0.8,1,0,8],Extrapolation.CLAMP)},{translateX :  withSpring(translateX.value * 0.5)}],
+    ],[-0.8,1,0,8],Extrapolation.CLAMP)},
+    {translateX :  withSpring(translateX.value)}],
     width:widthAnimated.get(),
     height: heigthAnimated.get(),
     }
 })
 
+//animating the image
 const styleImage = useAnimatedStyle(() => {
     return {
     width:IwidthAnimated.get(),
@@ -49,6 +55,7 @@ const handlePress = () =>{
     setActivetemp(!activetemp)
     }
 
+// move the card with animation based on card position index to the actice/expanded card
 useEffect(() => {    
     if (expanded != undefined) {
     if (index > currentIndex) {
@@ -60,6 +67,7 @@ useEffect(() => {
     }
 }, [expanded])
 
+// change the width and heigh of card and image if the card is expanded
 useEffect(() => {
     widthAnimated.value = withSpring(activetemp == true ? width: _itemwidth);
     heigthAnimated.value = withSpring(activetemp == true ? height - 20 : _itemheight);
@@ -68,20 +76,23 @@ useEffect(() => {
 }, [activetemp])
 
 return (
+    //touchablecomponent card, disabled when not focused and any card is expanded
     <TouchableOpacity disabled={currentIndex != index || expanded} onPress={handlePress}>
         <Animated.View style={[stylez,{
             backgroundColor: 'white',
             borderRadius: 15,
             }, styles.shadow]}>
-        <View style={{padding : 4, flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
-            {expanded && 
-            <TouchableOpacity  style={{position:'absolute', top:4, left:4,zIndex:1000}} onPress={handlePress}>
-            <Text>Close</Text>
-            </TouchableOpacity>
-            }
-            <Text style={{textAlign:'center',flex:1}}>{data.title}</Text>
-        </View>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+            <View style={{padding : 4, flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
+                {/* render close button to close the expanded card */}
+                {expanded && 
+                <TouchableOpacity  style={{position:'absolute', top:4, left:4,zIndex:1000}} onPress={handlePress}>
+                <Text>Close</Text>
+                </TouchableOpacity>
+                }
+                <Text style={{textAlign:'center',flex:1}}>{data.title}</Text>
+            </View>
+        {/* for scrolling the entire card details, disabled when not expanded */}
+        <ScrollView scrollEnabled={activetemp} contentContainerStyle={{ flexGrow: 1 }}>
             <Animated.Image style={styleImage} source={{uri : data.image}}/>
             <Text style={{textAlign:'justify',padding:8}} numberOfLines={!activetemp? 7 : undefined}>{data.content}</Text>
         </ScrollView >
